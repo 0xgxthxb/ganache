@@ -7,6 +7,9 @@
 
 import { dirname } from "path";
 
+export const SECP256K1_MAX_PRIVATE_KEY = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+export const SECP256K1_MAX_PRIVATE_KEY_DIV_2 = SECP256K1_MAX_PRIVATE_KEY / 2n;
+
 let secp256k1: {
   ecdsaRecover: (
     output: Uint8Array,

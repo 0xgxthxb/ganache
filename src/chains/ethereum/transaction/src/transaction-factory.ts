@@ -20,6 +20,20 @@ import { decode } from "@ganache/rlp";
 import { CodedError } from "@ganache/ethereum-utils";
 import { TypedTransaction } from "./transaction-types";
 import { EIP1559FeeMarketTransaction } from "./eip1559-fee-market-transaction";
+import { SECP256K1_MAX_PRIVATE_KEY_DIV_2 } from "@ganache/secp256k1";
+
+/**
+ * @param common 
+ * @param tx 
+ * @throws
+ */
+function assertValidTransactionSValue(common: Common, tx: LegacyTransaction | EIP2930AccessListTransaction | EIP1559FeeMarketTransaction) {
+  // Transaction signatures whose s-value is greater than secp256k1n/2 are
+  // invalid after the homestead hardfork. See: https://eips.ethereum.org/EIPS/eip-2
+  if (tx.s && tx.s.toBigInt() > SECP256K1_MAX_PRIVATE_KEY_DIV_2 && common.gteHardfork('homestead')) {
+    throw new Error("Invalid Signature: s-values greater than secp256k1n/2 are considered invalid")
+  }
+}
 
 const UNTYPED_TX_START_BYTE = 0xc0; // all txs with first byte >= 0xc0 are untyped
 
@@ -162,7 +176,9 @@ export class TransactionFactory {
   ) {
     const txType = this.typeOfRPC(txData);
 
-    return this._fromData(txData, txType, common, extra);
+    const tx = this._fromData(txData, txType, common, extra);
+    assertValidTransactionSValue(common, tx);
+    return tx;
   }
   /**
    * Create a transaction from a `txData` object
@@ -218,6 +234,7 @@ export class TransactionFactory {
     let data = Data.from(txData).toBuffer();
     const type = data[0];
     const txType = this.typeOf(type);
+    let tx: LegacyTransaction | EIP2930AccessListTransaction | EIP1559FeeMarketTransaction;
     if (common.isActivatedEIP(2718)) {
       let raw: TypedDatabasePayload;
       try {
@@ -227,7 +244,7 @@ export class TransactionFactory {
       } catch (e: any) {
         throw new Error("Could not decode transaction: " + e.message);
       }
-      return this._fromData(raw, txType, common);
+      tx = this._fromData(raw, txType, common);
     } else {
       let raw: TypedDatabasePayload;
       try {
@@ -235,8 +252,12 @@ export class TransactionFactory {
       } catch (e: any) {
         throw new Error("Could not decode transaction: " + e.message);
       }
-      return this._fromData(raw, TransactionType.Legacy, common);
+      tx = this._fromData(raw, TransactionType.Legacy, common);
     }
+
+    assertValidTransactionSValue(common, tx);
+
+    return tx;
   }
 
   private static typeOf(type: number) {
