@@ -3,7 +3,12 @@ import getProvider from "../../helpers/getProvider";
 import compile from "../../helpers/compile";
 import { join } from "path";
 import EthereumProvider from "../../../src/provider";
-import { EthereumProviderOptions } from "@ganache/ethereum-options";
+import {
+  EthereumOptionsConfig,
+  EthereumProviderOptions
+} from "@ganache/ethereum-options";
+import Wallet from "../../../src/wallet";
+import _ from "lodash";
 
 describe("api", () => {
   describe("eth", () => {
@@ -317,6 +322,24 @@ describe("api", () => {
 
           const balance0_2 = await p.send("eth_getBalance", [accounts[0]]);
           assert.strictEqual(BigInt(balance0_1) + 123n, BigInt(balance0_2));
+        });
+
+        it("generates EIP-2 an compliant private key", async () => {
+          // https://eips.ethereum.org/EIPS/eip-2
+          const SECP256K1_MAX_PRIVATE_KEY =
+            0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+          const options = EthereumOptionsConfig.normalize({});
+          const wallet = new Wallet(options.wallet);
+          const pk = BigInt(
+            wallet
+              .createFakePrivateKey(
+                // this is first (smallest) key that will trigger the EIP-2
+                // code path
+                "0xfffffffffffffffffffffffffffffffebaaedce6"
+              )
+              .toString()
+          );
+          assert(pk < SECP256K1_MAX_PRIVATE_KEY);
         });
       });
     });
