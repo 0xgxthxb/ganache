@@ -8,6 +8,8 @@ import {
   EthereumProviderOptions
 } from "@ganache/ethereum-options";
 import Wallet from "../../../src/wallet";
+import { SECP256K1_MAX_PRIVATE_KEY } from "@ganache/secp256k1";
+import { Data, Quantity } from "@ganache/utils";
 
 describe("api", () => {
   describe("eth", () => {
@@ -323,22 +325,36 @@ describe("api", () => {
           assert.strictEqual(BigInt(balance0_1) + 123n, BigInt(balance0_2));
         });
 
-        it("generates EIP-2 an compliant private key", async () => {
+        it.only("generates EIP-2 an compliant private key", async () => {
           // https://eips.ethereum.org/EIPS/eip-2
-          const SECP256K1_MAX_PRIVATE_KEY =
-            0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+
           const options = EthereumOptionsConfig.normalize({});
           const wallet = new Wallet(options.wallet);
-          const pk = BigInt(
-            wallet
-              .createFakePrivateKey(
-                // this is first (smallest) key that will trigger the EIP-2
-                // code path
-                "0xfffffffffffffffffffffffffffffffebaaedce6"
-              )
-              .toString()
+
+          function makeKeys(address: string) {
+            const addressBuf = Data.from(address).toBuffer();
+            const pk = BigInt(wallet.createFakePrivateKey(address).toString());
+            const naivePk = Quantity.from(
+              Buffer.concat([addressBuf, addressBuf.slice(0, 12)])
+            ).toBigInt();
+            return { naivePk, pk };
+          }
+
+          // sanity test. the small key doesn't trigger the secp256k1 upper
+          // limit
+          const smallKey = makeKeys(
+            "0xfffffffffffffffffffffffffffffffebaaedce4"
           );
-          assert(pk < SECP256K1_MAX_PRIVATE_KEY);
+          assert.strictEqual(smallKey.pk, smallKey.naivePk);
+          assert(smallKey.pk <= SECP256K1_MAX_PRIVATE_KEY);
+
+          // this is first (smallest) key that will trigger the secp256k1 upper
+          // limit code path
+          const largeKey = makeKeys(
+            "0xfffffffffffffffffffffffffffffffebaaedce5"
+          );
+          assert.notStrictEqual(largeKey.pk, largeKey.naivePk);
+          assert(largeKey.pk <= SECP256K1_MAX_PRIVATE_KEY);
         });
       });
     });
