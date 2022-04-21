@@ -27,15 +27,9 @@ import { SECP256K1_MAX_PRIVATE_KEY_DIV_2 } from "@ganache/secp256k1";
  * @param tx
  * @throws
  */
-function assertValidTransactionSValue(
-  common: Common,
-  tx:
-    | LegacyTransaction
-    | EIP2930AccessListTransaction
-    | EIP1559FeeMarketTransaction
-) {
+function assertValidTransactionSValue(common: Common, tx: TypedTransaction) {
   // Transaction signatures whose s-value is greater than secp256k1n/2 are
-  // invalid after the homestead hardfork. See: https://eips.ethereum.org/EIPS/eip-2
+  // invalid after EIP-2 hardfork (homestead). See: https://eips.ethereum.org/EIPS/eip-2
   if (
     tx.s &&
     tx.s.toBigInt() >= SECP256K1_MAX_PRIVATE_KEY_DIV_2 &&
