@@ -343,7 +343,7 @@ describe("api", () => {
           // sanity test. the small key doesn't trigger the secp256k1 upper
           // limit
           const smallKey = makeKeys(
-            "0xfffffffffffffffffffffffffffffffebaaedce4"
+            "0xfffffffffffffffffffffffffffffffebaaedce5"
           );
           assert.strictEqual(smallKey.pk, smallKey.naivePk);
           assert(smallKey.pk <= SECP256K1_MAX_PRIVATE_KEY);
@@ -351,7 +351,7 @@ describe("api", () => {
           // this is first (smallest) key that will trigger the secp256k1 upper
           // limit code path
           const largeKey = makeKeys(
-            "0xfffffffffffffffffffffffffffffffebaaedce5"
+            "0xfffffffffffffffffffffffffffffffebaaedce6"
           );
           assert.notStrictEqual(largeKey.pk, largeKey.naivePk);
           assert(largeKey.pk <= SECP256K1_MAX_PRIVATE_KEY);
