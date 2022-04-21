@@ -325,7 +325,7 @@ describe("api", () => {
           assert.strictEqual(BigInt(balance0_1) + 123n, BigInt(balance0_2));
         });
 
-        it.only("generates EIP-2 an compliant private key", async () => {
+        it("generates EIP-2 an compliant private key", async () => {
           // https://eips.ethereum.org/EIPS/eip-2
 
           const options = EthereumOptionsConfig.normalize({});
