@@ -37,10 +37,9 @@ function assertValidTransactionSValue(
   // Transaction signatures whose s-value is greater than secp256k1n/2 are
   // invalid after the homestead hardfork. See: https://eips.ethereum.org/EIPS/eip-2
   if (
-    common.isActivatedEIP(2) &&
     tx.s &&
     tx.s.toBigInt() >= SECP256K1_MAX_PRIVATE_KEY_DIV_2 &&
-    common.gteHardfork("homestead")
+    common.isActivatedEIP(2)
   ) {
     throw new Error(
       "Invalid Signature: s-values greater than secp256k1n/2 are considered invalid"
