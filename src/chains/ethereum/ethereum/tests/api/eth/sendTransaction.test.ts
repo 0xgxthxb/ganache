@@ -8,7 +8,6 @@ import {
   EthereumProviderOptions
 } from "@ganache/ethereum-options";
 import Wallet from "../../../src/wallet";
-import _ from "lodash";
 
 describe("api", () => {
   describe("eth", () => {
